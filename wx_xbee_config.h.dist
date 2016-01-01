@@ -1,0 +1,11 @@
+
+#define DECLINATION -0.2577269587; //Compass declination in radians (-15 deg)
+
+#define INTER_LOOP_DELAY 1000; // How long to delay between full loops
+#define INTER_PACKET_DELAY 500; // How long to delay after a packet is sent.
+
+//MUST Set the address of your DS2423 here
+uint8_t DS2423_address[] = { 0x1D, 0xD2, 0xE2, 0x07, 0x0, 0x0, 0x0, 0x0 };
+
+//Device ID in the network.
+uint8_t Device_id = 0

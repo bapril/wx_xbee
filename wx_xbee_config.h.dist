@@ -9,3 +9,7 @@ uint8_t DS2423_address[] = { 0x1D, 0xD2, 0xE2, 0x07, 0x0, 0x0, 0x0, 0x0 };
 
 //Device ID in the network.
 uint8_t Device_id = 0
+
+//Which RH sensor is in use?
+#define RH_SHT31 true
+//#define RH_HTU21DF true

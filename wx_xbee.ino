@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
+#include "wx_xbee_config.h"
 #include <XBee.h>
 #include <Wire.h>
 #include <OneWire.h>
@@ -22,11 +22,16 @@
 #include <Adafruit_Sensor.h>
 #include <Adafruit_HMC5883_U.h>
 #include <SoftwareSerial.h>
-#include "Adafruit_HTU21DF.h"
+
 #include <avr/sleep.h>
 #include <avr/power.h>
 
-#include "wx_xbee_config.h"
+#if defined(RH_HTU21DF)
+  #include "Adafruit_HTU21DF.h"
+#endif
+#if defined(RH_SHT31)
+  #include "Adafruit_SHT31.h"
+#endif
 
 #define OWPIN 1
 #define SLPPIN 9 //Xbee sleep pin. Low for wake, high for sleep.
@@ -51,7 +56,15 @@ Adafruit_SI1145 uv = Adafruit_SI1145();
 XBee xbee = XBee();
 
 Adafruit_HMC5883_Unified mag = Adafruit_HMC5883_Unified(12346);
-Adafruit_HTU21DF htu = Adafruit_HTU21DF();
+
+#if defined(RH_HTU21DF)
+Adafruit_HTU21DF rhs = Adafruit_HTU21DF();
+#endif
+
+#if defined(RH_SHT31)
+Adafruit_SHT31 rhs = Adafruit_SHT31();
+#endif
+
 uint8_t const max_payload_size = 9;
 uint8_t payload[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
@@ -163,12 +176,13 @@ void setup()
     bmp_enable = true;
   }
 
-  if (!htu.begin()) {
+if (!rhs.begin()) {
     Serial.println("RH:Couldn't find sensor!");
   } else {
     Serial.println("RH Sensor on-line.");
     rh_enable = true;
   }
+
   ds2423.begin(DS2423_COUNTER_A|DS2423_COUNTER_B);
 
   Serial.println("Drviers loaded, starting up");
@@ -211,13 +225,13 @@ void loop()
       break;
     case 1:
       if (rh_enable) {
-        val = htu.readTemperature();
+        val = rhs.readTemperature();
         a = (byte *) &val;
         payload[4]  = a[0];
         payload[5]  = a[1];
         payload[6]  = a[2];
         payload[7]  = a[3];
-        val = htu.readHumidity();
+        val = rhs.readHumidity();
         a = (byte *) &val;
         payload[8]  = a[0];
         payload[9]  = a[1];
@@ -280,14 +294,19 @@ void loop()
       state = 4;
       break;
     case 4: //Counter1
+      ds2423.update();
       vall = ds2423.getCount(DS2423_COUNTER_A);
       a = (byte *) &vall;
+      Serial.print("Count A = ");
+      Serial.print(vall);
       payload[4]  = a[0];
       payload[5]  = a[1];
       payload[6]  = a[2];
       payload[7]  = a[3];
       vall = ds2423.getCount(DS2423_COUNTER_B);
       a = (byte *) &vall;
+      Serial.print("Count B = ");
+      Serial.println(vall);
       payload[8]  = a[0];
       payload[9]  = a[1];
       payload[10]  = a[2];
@@ -352,7 +371,7 @@ void loop()
       payload[5]  = a[1];
       payload[6]  = a[2];
       payload[7]  = a[3];
-      a = (byte *) &Error_count;
+      a = (byte *) &error_count;
       payload[5]  = a[0];
       payload[6]  = a[1];
       payload[7]  = a[2];
